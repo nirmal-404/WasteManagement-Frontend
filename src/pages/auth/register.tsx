@@ -1,12 +1,19 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { useForm } from 'react-hook-form'
+import { useForm, Controller } from 'react-hook-form'
 import { useAuthStore } from '../../stores/authStore'
 import { Button } from '../../components/ui/button'
 import { Input } from '../../components/ui/input'
 import { Label } from '../../components/ui/label'
-import { Select } from '../../components/ui/select'
+import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../../components/ui/select'
 import LoadingSpinner from '../../components/ui/LoadingSpinner'
+import { ZONES, USER_ROLES } from '../../constants'
 
 interface RegisterForm {
   name: string
@@ -19,18 +26,10 @@ interface RegisterForm {
   role: string
 }
 
-const ZONES = [
-  'Zone A - Central',
-  'Zone B - North',
-  'Zone C - South',
-  'Zone D - East',
-  'Zone E - West'
-]
-
-const ROLES = [
-  { value: 'RESIDENT', label: 'Resident' },
-  { value: 'BUSINESS', label: 'Business' }
-]
+// Only allow residents and businesses to register
+const ALLOWED_ROLES = USER_ROLES.filter(role => 
+  ['RESIDENT', 'BUSINESS'].includes(role.value)
+)
 
 export default function Register() {
   const [isLoading, setIsLoading] = useState(false)
@@ -40,6 +39,7 @@ export default function Register() {
     register,
     handleSubmit,
     watch,
+    control,
     formState: { errors }
   } = useForm<RegisterForm>()
 
@@ -169,20 +169,25 @@ export default function Register() {
 
             <div>
               <Label htmlFor="zone">Zone</Label>
-              <Select
-                id="zone"
-                className="mt-1"
-                {...register('zone', {
-                  required: 'Zone is required'
-                })}
-              >
-                <option value="">Select your zone</option>
-                {ZONES.map((zone) => (
-                  <option key={zone} value={zone}>
-                    {zone}
-                  </option>
-                ))}
-              </Select>
+              <Controller
+                name="zone"
+                control={control}
+                rules={{ required: 'Zone is required' }}
+                render={({ field }) => (
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    <SelectTrigger className="mt-1">
+                      <SelectValue placeholder="Select your zone" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {ZONES.map((zone) => (
+                        <SelectItem key={zone} value={zone}>
+                          {zone}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
               {errors.zone && (
                 <p className="mt-1 text-sm text-red-600">{errors.zone.message}</p>
               )}
@@ -190,20 +195,25 @@ export default function Register() {
 
             <div>
               <Label htmlFor="role">Account Type</Label>
-              <Select
-                id="role"
-                className="mt-1"
-                {...register('role', {
-                  required: 'Account type is required'
-                })}
-              >
-                <option value="">Select account type</option>
-                {ROLES.map((role) => (
-                  <option key={role.value} value={role.value}>
-                    {role.label}
-                  </option>
-                ))}
-              </Select>
+              <Controller
+                name="role"
+                control={control}
+                rules={{ required: 'Account type is required' }}
+                render={({ field }) => (
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    <SelectTrigger className="mt-1">
+                      <SelectValue placeholder="Select account type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {ALLOWED_ROLES.map((role) => (
+                        <SelectItem key={role.value} value={role.value}>
+                          {role.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
               {errors.role && (
                 <p className="mt-1 text-sm text-red-600">{errors.role.message}</p>
               )}

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { useAuthStore } from '../../stores/authStore'
 import { Button } from '../../components/ui/button'
@@ -15,7 +15,6 @@ interface LoginForm {
 export default function Login() {
   const [isLoading, setIsLoading] = useState(false)
   const { login } = useAuthStore()
-  const navigate = useNavigate()
   
   const {
     register,
