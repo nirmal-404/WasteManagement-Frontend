@@ -104,35 +104,39 @@ export default function RequestManagement() {
     setGeneratingRoute(true);
     try {
       console.log('Generating route for request:', request.requestId);
+      console.log('API URL:', API_URL);
       
-      // Create route directly without checking bins first
+      const routePayload = {
+        routeName: `Route for ${request.requestId}`,
+        startLocation: {
+          latitude: 6.9271,
+          longitude: 80.7744
+        }
+      };
+      
+      console.log('Route payload:', routePayload);
+      
       const routeResponse = await fetch(`${API_URL}/routes`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({
-          routeName: `Route for ${request.requestId}`,
-          startLocation: {
-            latitude: 6.9271,  // Negombo, Sri Lanka
-            longitude: 80.7744
-          }
-        })
+        body: JSON.stringify(routePayload)
       });
 
+      console.log('Route response status:', routeResponse.status);
       const routeData = await routeResponse.json();
+      console.log('Route response data:', routeData);
 
       if (!routeResponse.ok) {
-        throw new Error(routeData.message || 'Failed to generate route');
+        throw new Error(routeData.message || `Failed to generate route (Status: ${routeResponse.status})`);
       }
-
-      console.log('Route created:', routeData);
 
       // Show route in new window
       if (routeData.directionsUrl) {
         window.open(routeData.directionsUrl, '_blank');
         alert('Route generated successfully! Opening Google Maps directions...');
       } else {
-        alert(`Route generated successfully with ID: ${routeData._id}`);
+        alert(`Route generated successfully with ID: ${routeData._id || 'unknown'}`);
       }
       
       setGeneratingRoute(false);
@@ -225,27 +229,54 @@ export default function RequestManagement() {
   };
 
   const fetchDriversAndVehicles = async () => {
-    try {
-      // This is a placeholder - replace with actual API endpoints
-      // For now, we'll use mock data
-      setDrivers([
-        { _id: '1', name: 'John Driver', phone: '0771234567' },
-        { _id: '2', name: 'Jane Driver', phone: '0771234568' }
-      ]);
-      
-      setVehicles([
-        { _id: '1', plateNo: 'ABC-1234', capacityKg: 5000 },
-        { _id: '2', plateNo: 'DEF-5678', capacityKg: 3000 }
-      ]);
+  try {
+    console.log('Fetching drivers, collectors, and vehicles...');
 
-      setCollectors([
-        { _id: '1', name: 'Collector 1', phone: '0771111111' },
-        { _id: '2', name: 'Collector 2', phone: '0771111112' }
-      ]);
-    } catch (err) {
-      console.error('Failed to fetch drivers/vehicles:', err);
+    // Fetch drivers (users with DRIVER role)
+    const driversRes = await fetch(`${API_URL}/users?role=DRIVER`, {
+      credentials: 'include'
+    });
+    if (driversRes.ok) {
+      const driversData = await driversRes.json();
+      const driversList = driversData.users || [];
+      console.log('Drivers:', driversList);
+      setDrivers(driversList);
+    } else {
+      setDrivers([]);
     }
-  };
+
+    // Fetch collectors (users with COLLECTOR role)
+    const collectorsRes = await fetch(`${API_URL}/users?role=COLLECTOR`, {
+      credentials: 'include'
+    });
+    if (collectorsRes.ok) {
+      const collectorsData = await collectorsRes.json();
+      const collectorsList = collectorsData.users || [];
+      console.log('Collectors:', collectorsList);
+      setCollectors(collectorsList);
+    } else {
+      setCollectors([]);
+    }
+
+    // Fetch trucks (vehicles)
+    const trucksRes = await fetch(`${API_URL}/trucks`, {
+      credentials: 'include'
+    });
+    if (trucksRes.ok) {
+      const trucksData = await trucksRes.json();
+      const trucksList = trucksData.trucks || [];
+      console.log('Trucks:', trucksList);
+      setVehicles(trucksList);
+    } else {
+      setVehicles([]);
+    }
+  } catch (err) {
+    console.error('Error fetching drivers/collectors/trucks:', err);
+    setDrivers([]);
+    setCollectors([]);
+    setVehicles([]);
+  }
+};
 
   const handleApproveRequest = async () => {
     if (!selectedRequest) return;

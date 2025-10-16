@@ -54,25 +54,34 @@ export default function CollectionTracking() {
     setLoading(true);
     setError('');
     try {
-      const queryParams = new URLSearchParams({
-        status: filter,
-        limit: '20'
-      });
-
-      const response = await fetch(`${API_URL}/requests?${queryParams}`, {
+      console.log('Fetching collections for collector...');
+      
+      // Use the collector-specific endpoint
+      const response = await fetch(`${API_URL}/collector/requests/today`, {
         credentials: 'include'
       });
 
       const data = await response.json();
+      console.log('Response data:', data);
 
       if (!response.ok) {
         throw new Error(data.message || 'Failed to fetch collections');
       }
 
-      // Filter for assigned requests (only show if collector is in the list)
-      const assignedRequests = data.requests.filter((req: any) => req.assigned?.collectors?.length > 0);
+      // The endpoint returns requests array
+      let assignedRequests = data.requests || [];
+      
+      console.log('All requests:', assignedRequests);
+      
+      // Filter by status
+      if (filter !== 'SCHEDULED') {
+        assignedRequests = assignedRequests.filter((req: any) => req.status === filter);
+      }
+
+      console.log('Filtered requests:', assignedRequests);
       setCollections(assignedRequests);
     } catch (err: unknown) {
+      console.error('Fetch error:', err);
       if (err instanceof Error) {
         setError(err.message);
       } else {
@@ -122,14 +131,34 @@ export default function CollectionTracking() {
     return icons[urgency] || '⚪';
   };
 
+  const handleViewRoute = (collection: Assignment) => {
+    // Starting point (depot) - you can change this to your actual depot coordinates
+    const depotLat = 6.9271;
+    const depotLng = 80.7744;
+    
+    // Get customer address from the collection
+    const customerAddress = collection.userId.address;
+    
+    // Create Google Maps URL with directions
+    const mapsUrl = `https://www.google.com/maps/dir/?api=1&origin=${depotLat},${depotLng}&destination=${encodeURIComponent(customerAddress)}&travelmode=driving`;
+    
+    // Open in new window
+    window.open(mapsUrl, '_blank');
+  };
+
   const getStatusColor = (status: string) => {
-    const colors: { [key: string]: string } = {
-      SCHEDULED: 'bg-purple-100 text-purple-800 border-purple-300',
-      IN_PROGRESS: 'bg-cyan-100 text-cyan-800 border-cyan-300',
-      COMPLETED: 'bg-green-100 text-green-800 border-green-300',
-      CANCELLED: 'bg-red-100 text-red-800 border-red-300'
-    };
-    return colors[status] || 'bg-gray-100 text-gray-800 border-gray-300';
+    switch (status) {
+      case 'SCHEDULED':
+        return 'border-blue-500 text-blue-600 bg-blue-50';
+      case 'IN_PROGRESS':
+        return 'border-yellow-500 text-yellow-600 bg-yellow-50';
+      case 'COMPLETED':
+        return 'border-green-500 text-green-600 bg-green-50';
+      case 'CANCELLED':
+        return 'border-red-500 text-red-600 bg-red-50';
+      default:
+        return 'border-gray-300 text-gray-600 bg-gray-50';
+    }
   };
 
   return (
@@ -282,6 +311,13 @@ export default function CollectionTracking() {
 
                 {/* Status Update Buttons */}
                 <div className="border-t pt-4 space-y-2">
+                  <button
+                    onClick={() => handleViewRoute(selectedCollection)}
+                    className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition"
+                  >
+                    🗺️ View Route on Maps
+                  </button>
+
                   {selectedCollection.status === 'SCHEDULED' && (
                     <button
                       onClick={() => handleUpdateStatus(selectedCollection._id, 'IN_PROGRESS')}

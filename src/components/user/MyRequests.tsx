@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-const API_URL = 'http://localhost:4000/api';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
 
 type Request = {
   _id: string;
@@ -28,11 +28,27 @@ type Request = {
     rating: number;
     feedback: string;
   };
+  statusHistory?: Array<{
+    status: string;
+    timestamp: string;
+    note?: string;
+  }>;
+  createdAt: string;
+  updatedAt?: string;
+};
+
+type Notification = {
+  _id: string;
+  message: string;
+  type: 'success' | 'info' | 'warning';
+  requestId?: string;
+  read: boolean;
   createdAt: string;
 };
 
 export default function MyRequests() {
   const [requests, setRequests] = useState<Request[]>([]);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [selectedRequest, setSelectedRequest] = useState<Request | null>(null);
@@ -42,9 +58,11 @@ export default function MyRequests() {
   const [rating, setRating] = useState(0);
   const [feedback, setFeedback] = useState('');
   const [submittingRating, setSubmittingRating] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
 
   useEffect(() => {
     fetchRequests();
+    fetchNotifications();
   }, [filter, page]);
 
   const fetchRequests = async () => {
@@ -77,6 +95,36 @@ export default function MyRequests() {
       }
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchNotifications = async () => {
+    try {
+      const response = await fetch(`${API_URL}/notifications/my`, {
+        credentials: 'include'
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setNotifications(data.notifications || []);
+      }
+    } catch (err) {
+      console.error('Failed to fetch notifications:', err);
+    }
+  };
+
+  const markNotificationAsRead = async (notificationId: string) => {
+    try {
+      await fetch(`${API_URL}/notifications/${notificationId}/read`, {
+        method: 'PATCH',
+        credentials: 'include'
+      });
+      
+      setNotifications(prev => 
+        prev.map(n => n._id === notificationId ? { ...n, read: true } : n)
+      );
+    } catch (err) {
+      console.error('Failed to mark notification as read:', err);
     }
   };
 
@@ -139,17 +187,97 @@ export default function MyRequests() {
     return colors[urgency] || 'text-gray-600';
   };
 
+  const unreadCount = notifications.filter(n => !n.read).length;
+
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4">
       <div className="max-w-6xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">My Requests</h1>
-          <p className="text-gray-600 mt-1">View and manage your collection requests</p>
+        <div className="mb-8 flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">My Requests</h1>
+            <p className="text-gray-600 mt-1">View and manage your collection requests</p>
+          </div>
+          
+          {/* Notifications Bell */}
+          <button
+            onClick={() => setShowNotifications(!showNotifications)}
+            className="relative px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition"
+          >
+            <span className="text-xl">🔔</span>
+            {unreadCount > 0 && (
+              <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full h-6 w-6 flex items-center justify-center">
+                {unreadCount}
+              </span>
+            )}
+          </button>
         </div>
+
+        {/* Notifications Panel */}
+        {showNotifications && (
+          <div className="bg-white rounded-lg shadow-lg mb-6 border border-gray-200 p-4 max-h-96 overflow-y-auto">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-bold text-gray-900">Notifications</h3>
+              <button
+                onClick={() => setShowNotifications(false)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                ✕
+              </button>
+            </div>
+            
+            {notifications.length === 0 ? (
+              <p className="text-gray-500 text-center py-4">No notifications</p>
+            ) : (
+              <div className="space-y-3">
+                {notifications.map((notification) => (
+                  <div
+                    key={notification._id}
+                    onClick={() => markNotificationAsRead(notification._id)}
+                    className={`p-3 rounded-lg cursor-pointer transition ${
+                      notification.read 
+                        ? 'bg-gray-50 border border-gray-200' 
+                        : 'bg-blue-50 border border-blue-300'
+                    }`}
+                  >
+                    <div className="flex items-start gap-2">
+                      <span className="text-lg">
+                        {notification.type === 'success' ? '✅' : 
+                         notification.type === 'warning' ? '⚠️' : 'ℹ️'}
+                      </span>
+                      <div className="flex-1">
+                        <p className={`text-sm ${notification.read ? 'text-gray-700' : 'text-gray-900 font-medium'}`}>
+                          {notification.message}
+                        </p>
+                        <p className="text-xs text-gray-500 mt-1">
+                          {new Date(notification.createdAt).toLocaleString()}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
         {error && (
           <div className="bg-red-50 border-l-4 border-red-500 text-red-800 px-4 py-3 rounded mb-6">
             <p className="font-semibold">{error}</p>
+          </div>
+        )}
+
+        {/* Status Change Alerts */}
+        {requests.some(r => r.status === 'APPROVED' || r.status === 'SCHEDULED') && (
+          <div className="bg-green-50 border-l-4 border-green-500 px-4 py-3 rounded mb-6">
+            <div className="flex items-center gap-2">
+              <span className="text-green-600 text-xl">✅</span>
+              <div>
+                <p className="font-semibold text-green-800">Good News!</p>
+                <p className="text-green-700 text-sm">
+                  You have requests that have been approved or scheduled. Check your requests below!
+                </p>
+              </div>
+            </div>
           </div>
         )}
 
@@ -201,19 +329,26 @@ export default function MyRequests() {
                     }`}
                   >
                     <div className="flex justify-between items-start mb-3">
-                      <div>
-                        <p className="text-sm text-gray-500">Request ID: {req.requestId}</p>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <p className="text-xs font-mono bg-gray-100 px-2 py-1 rounded text-gray-700">
+                            {req.requestId}
+                          </p>
+                          <span className={`px-2 py-1 rounded text-xs font-medium border ${getStatusColor(req.status)}`}>
+                            {req.status}
+                          </span>
+                          {req.updatedAt && new Date(req.updatedAt).getTime() > new Date(req.createdAt).getTime() + 60000 && (
+                            <span className="text-xs text-blue-600 font-medium">● Updated</span>
+                          )}
+                        </div>
                         <h3 className="font-semibold text-gray-900 mt-1">{req.description.substring(0, 50)}...</h3>
                       </div>
-                      <span className={`px-3 py-1 rounded-full text-xs font-medium border ${getStatusColor(req.status)}`}>
-                        {req.status}
-                      </span>
-                    </div>
-                    <div className="flex justify-between items-center text-sm text-gray-600">
-                      <span className={`font-medium ${getUrgencyColor(req.urgency)}`}>
-                        {req.urgency} Urgency
-                      </span>
-                      <span className="font-semibold text-emerald-600">LKR {req.fee.toFixed(2)}</span>
+                      <div className="text-right">
+                        <p className={`text-sm font-medium ${getUrgencyColor(req.urgency)}`}>
+                          {req.urgency}
+                        </p>
+                        <p className="text-lg font-bold text-emerald-600 mt-1">LKR {req.fee.toFixed(2)}</p>
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -247,6 +382,23 @@ export default function MyRequests() {
             {selectedRequest ? (
               <div className="bg-white rounded-lg shadow border border-gray-200 p-6 sticky top-4 space-y-4">
                 <h2 className="text-xl font-bold text-gray-900">Request Details</h2>
+                
+                {/* Status Change Alert */}
+                {(selectedRequest.status === 'APPROVED' || selectedRequest.status === 'SCHEDULED') && (
+                  <div className="bg-green-50 border border-green-300 rounded-lg p-3">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="text-green-600 text-lg">✅</span>
+                      <p className="font-semibold text-green-800">
+                        {selectedRequest.status === 'APPROVED' ? 'Request Approved!' : 'Collection Scheduled!'}
+                      </p>
+                    </div>
+                    <p className="text-green-700 text-sm">
+                      {selectedRequest.status === 'APPROVED' 
+                        ? 'Your request has been approved. We will schedule a collection time soon.'
+                        : 'Your collection has been scheduled. See details below.'}
+                    </p>
+                  </div>
+                )}
                 
                 <div className="space-y-3 text-sm">
                   <div>
@@ -303,27 +455,28 @@ export default function MyRequests() {
                   )}
 
                   {selectedRequest.status === 'SCHEDULED' && selectedRequest.assigned && (
-                    <>
+                    <div className="bg-purple-50 p-3 rounded-lg border border-purple-200 mt-4">
+                      <p className="font-semibold text-purple-900 mb-2">📋 Collection Details</p>
                       {selectedRequest.assigned.driverId && (
-                        <div>
-                          <p className="text-gray-500">Assigned Driver</p>
-                          <p className="font-semibold text-gray-900">{selectedRequest.assigned.driverId.name}</p>
-                          <p className="text-gray-600">{selectedRequest.assigned.driverId.phone}</p>
+                        <div className="mb-2">
+                          <p className="text-purple-800 text-xs">Assigned Driver</p>
+                          <p className="font-semibold text-purple-900">{selectedRequest.assigned.driverId.name}</p>
+                          <p className="text-purple-700 text-xs">{selectedRequest.assigned.driverId.phone}</p>
                         </div>
                       )}
                       {selectedRequest.assigned.vehicleId && (
-                        <div>
-                          <p className="text-gray-500">Vehicle</p>
-                          <p className="font-semibold text-gray-900">{selectedRequest.assigned.vehicleId.plateNo}</p>
+                        <div className="mb-2">
+                          <p className="text-purple-800 text-xs">Vehicle</p>
+                          <p className="font-semibold text-purple-900">{selectedRequest.assigned.vehicleId.plateNo}</p>
                         </div>
                       )}
                       {selectedRequest.scheduledAt && (
                         <div>
-                          <p className="text-gray-500">Scheduled Date/Time</p>
-                          <p className="font-semibold text-gray-900">{new Date(selectedRequest.scheduledAt).toLocaleString()}</p>
+                          <p className="text-purple-800 text-xs">Scheduled Date/Time</p>
+                          <p className="font-semibold text-purple-900">{new Date(selectedRequest.scheduledAt).toLocaleString()}</p>
                         </div>
                       )}
-                    </>
+                    </div>
                   )}
 
                   {selectedRequest.status === 'REJECTED' && selectedRequest.rejectionReason && (
@@ -339,7 +492,7 @@ export default function MyRequests() {
                   </div>
                 </div>
 
-                {/* Rating Section - Show for Completed Requests */}
+                {/* Rating Section */}
                 {selectedRequest.status === 'COMPLETED' && !selectedRequest.customerRating && (
                   <div className="border-t pt-4 mt-4 space-y-3">
                     <p className="font-semibold text-gray-900">Rate This Service</p>
