@@ -7,6 +7,7 @@ import MyRequests from '../../components/user/MyRequests'
 import MyPayments from '../../components/user/MyPayments'
 import NewRequest from '../../components/user/NewRequest'
 import MyBins from '../../components/user/MyBin_Assign'
+import MyPaymentGateway from '../../components/user/MyPaymentGateway'
 
 export default function UserHome() {
   const { user } = useAuthStore()
@@ -29,6 +30,7 @@ export default function UserHome() {
               <Route path="/requests/new" element={<NewRequest />} />
               <Route path="/payments" element={<MyPayments />} />
               <Route path="/bins" element={<MyBins />} />
+              <Route path="/payment-gateway" element={<MyPaymentGateway />} />
             </Routes>
           </main>
         </div>

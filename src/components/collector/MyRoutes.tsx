@@ -495,7 +495,7 @@ export default function MyRoutes() {
                   type="text"
                   value={routeName}
                   onChange={(e) => setRouteName(e.target.value)}
-                  placeholder="e.g., Anamaduwa Collection"
+                  placeholder="e.g., Collection Name"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
                   autoFocus
                 />
@@ -519,9 +519,7 @@ export default function MyRoutes() {
 
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
                 <p className="text-xs text-blue-800 leading-relaxed">
-                  <strong>How it works:</strong> Paste a Google Maps URL of your starting location. 
-                  The system will extract coordinates, find bins with fill level ≥90% and status "Ready", 
-                  then create an optimized collection route.
+                  <strong>How it works:</strong> Paste a Google Maps URL of your starting location.
                 </p>
               </div>
 

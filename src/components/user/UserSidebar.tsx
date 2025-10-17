@@ -7,6 +7,7 @@ const navigation = [
   { name: 'New Request', href: '/user/requests/new', icon: '➕' },
   { name: 'Payments', href: '/user/payments', icon: '💳' },
   { name: 'Bins', href: '/user/bins', icon: '🗑️' },
+  { name: 'Payment Gateway', href: '/user/payment-gateway', icon: '💰' },
 ]
 
 export default function UserSidebar() {
