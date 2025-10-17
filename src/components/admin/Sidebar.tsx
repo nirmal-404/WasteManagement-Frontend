@@ -12,7 +12,7 @@ const navigation = [
 
 export default function Sidebar() {
   return (
-    <div className="w-64 bg-white shadow-lg">
+    <div className="w-64 bg-white shadow-lg h-screen sticky top-0 flex flex-col">
       <div className="p-6">
         <div className="flex items-center">
           <div className="h-8 w-8 bg-green-600 rounded-lg flex items-center justify-center">
@@ -25,7 +25,7 @@ export default function Sidebar() {
         </div>
       </div>
       
-      <nav className="mt-6">
+      <nav className="mt-6 flex-1 overflow-y-auto">
         <div className="px-3">
           {navigation.map((item) => (
             <NavLink
@@ -47,7 +47,7 @@ export default function Sidebar() {
         </div>
       </nav>
       
-      <div className="absolute bottom-0 w-64 p-4">
+      <div className="p-4 mt-auto">
         <div className="bg-gray-100 rounded-lg p-3">
           <p className="text-xs text-gray-600">
             Smart Waste Management System v1.0
