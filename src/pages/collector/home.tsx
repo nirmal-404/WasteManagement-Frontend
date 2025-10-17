@@ -4,6 +4,7 @@ import CollectorHeader from '../../components/collector/CollectorHeader'
 import CollectorSidebar from '../../components/collector/CollectorSidebar'
 import CollectorDashboard from '../../components/collector/CollectorDashboard'
 import MyRoutes from '../../components/collector/MyRoutes'
+import CollectionBins from '../../components/collector/CollectionBins'
 import CollectionTracking from '../../components/collector/CollectionTracking'
 
 export default function CollectorHome() {
@@ -25,6 +26,7 @@ export default function CollectorHome() {
               <Route path="/dashboard" element={<CollectorDashboard />} />
               <Route path="/routes" element={<MyRoutes />} />
               <Route path="/tracking" element={<CollectionTracking />} />
+              <Route path="/bins" element={<CollectionBins />} />
             </Routes>
           </main>
         </div>
