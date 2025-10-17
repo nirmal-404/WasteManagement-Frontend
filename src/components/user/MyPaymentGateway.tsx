@@ -20,6 +20,7 @@ const CheckoutForm: React.FC = () => {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const billId = params.get('billId');
+  const billLabel = params.get('label');
   const amountParam = params.get('amount');
   const amount = amountParam ? parseFloat(amountParam) : 0;
 
@@ -97,7 +98,7 @@ const CheckoutForm: React.FC = () => {
           <div className="mt-6 space-y-3 text-sm">
             <div className="flex items-center justify-between">
               <span className="text-gray-600">Bill</span>
-              <span className="font-medium text-gray-900">{billId || '-'}</span>
+              <span className="font-medium text-gray-900">{billLabel || billId || '-'}</span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-gray-600">Amount</span>

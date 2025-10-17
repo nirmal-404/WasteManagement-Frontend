@@ -8,7 +8,6 @@ const navigation = [
   { name: 'Waste Records', href: '/user/waste-records', icon: '🧾' },
   { name: 'Bills & Payments', href: '/user/payments', icon: '💳' },
   { name: 'Bins', href: '/user/bins', icon: '🗑️' },
-  { name: 'Payment Gateway', href: '/user/payment-gateway', icon: '💰' },
 ]
 
 export default function UserSidebar() {

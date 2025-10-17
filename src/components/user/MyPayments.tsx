@@ -39,7 +39,7 @@ export default function MyPayments() {
 
   const handlePay = (bill: Bill) => {
     const amount = bill.totalAmount
-    navigate(`/user/payment-gateway?billId=${encodeURIComponent(bill._id)}&amount=${encodeURIComponent(amount)}`)
+    navigate(`/user/payment-gateway?billId=${encodeURIComponent(bill._id)}&label=${encodeURIComponent(bill.billId)}&amount=${encodeURIComponent(amount)}`)
   }
 
   return (
