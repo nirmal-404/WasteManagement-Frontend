@@ -5,7 +5,9 @@ const navigation = [
   { name: 'Dashboard', href: '/user/dashboard', icon: '🏠' },
   { name: 'My Requests', href: '/user/requests', icon: '📝' },
   { name: 'New Request', href: '/user/requests/new', icon: '➕' },
-  { name: 'Payments', href: '/user/payments', icon: '💳' },
+  { name: 'Waste Records', href: '/user/waste-records', icon: '🧾' },
+  { name: 'Bills & Payments', href: '/user/payments', icon: '💳' },
+  { name: 'Bins', href: '/user/bins', icon: '🗑️' },
 ]
 
 export default function UserSidebar() {
