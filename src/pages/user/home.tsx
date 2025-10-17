@@ -5,6 +5,7 @@ import UserSidebar from '../../components/user/UserSidebar'
 import UserDashboard from '../../components/user/UserDashboard'
 import MyRequests from '../../components/user/MyRequests'
 import MyPayments from '../../components/user/MyPayments'
+import MyWasteRecords from '../../components/user/MyWasteRecords'
 import NewRequest from '../../components/user/NewRequest'
 import MyBins from '../../components/user/MyBin_Assign'
 import MyPaymentGateway from '../../components/user/MyPaymentGateway'
@@ -28,6 +29,7 @@ export default function UserHome() {
               <Route path="/dashboard" element={<UserDashboard />} />
               <Route path="/requests" element={<MyRequests />} />
               <Route path="/requests/new" element={<NewRequest />} />
+              <Route path="/waste-records" element={<MyWasteRecords />} />
               <Route path="/payments" element={<MyPayments />} />
               <Route path="/bins" element={<MyBins />} />
               <Route path="/payment-gateway" element={<MyPaymentGateway />} />
