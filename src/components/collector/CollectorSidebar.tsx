@@ -5,6 +5,7 @@ const navigation = [
   { name: 'Dashboard', href: '/collector/dashboard', icon: '🏠' },
   { name: 'My Routes', href: '/collector/routes', icon: '🗺️' },
   { name: 'Collection Tracking', href: '/collector/tracking', icon: '📱' },
+  { name: 'Bins', href: '/collector/bins', icon: '🗑️' },
 ]
 
 export default function CollectorSidebar() {
