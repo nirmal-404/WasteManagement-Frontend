@@ -1,7 +1,21 @@
 import { useAuthStore } from '../../stores/authStore'
+import { useEffect, useState } from 'react'
+
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api'
 
 export default function UserDashboard() {
   const { user } = useAuthStore()
+  const [reward, setReward] = useState<{ points: number; expiryDate?: string } | null>(null)
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch(`${API_URL}/rewards/my`, { credentials: 'include' })
+        const data = await res.json()
+        if (res.ok) setReward(data.reward || null)
+      } catch {}
+    })()
+  }, [])
 
   return (
     <div className="space-y-6">
@@ -37,7 +51,10 @@ export default function UserDashboard() {
             <div className="text-2xl mr-3">⭐</div>
             <div>
               <p className="text-sm font-medium text-gray-600">Reward Points</p>
-              <p className="text-2xl font-bold text-gray-900">{user?.rewardsBalance || 0}</p>
+              <p className="text-2xl font-bold text-gray-900">{reward?.points ?? user?.rewardsBalance ?? 0}</p>
+              {reward?.expiryDate && (
+                <p className="text-xs text-gray-500 mt-1">Expiry: {new Date(reward.expiryDate).toLocaleDateString()}</p>
+              )}
             </div>
           </div>
         </div>
