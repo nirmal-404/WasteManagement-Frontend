@@ -23,6 +23,19 @@ const CheckoutForm: React.FC = () => {
   const billLabel = params.get('label');
   const amountParam = params.get('amount');
   const amount = amountParam ? parseFloat(amountParam) : 0;
+  const [reward, setReward] = useState<{ points: number; expiryDate?: string } | null>(null);
+  const [redeem, setRedeem] = useState<number>(0);
+
+  // Load reward balance
+  React.useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch(`${API_URL}/rewards/my`, { credentials: 'include' });
+        const data = await res.json();
+        if (res.ok && data.reward) setReward({ points: data.reward.points || 0, expiryDate: data.reward.expiryDate });
+      } catch {}
+    })();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,7 +50,7 @@ const CheckoutForm: React.FC = () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           items: [
-            { name: billId ? `Bill ${billId}` : "Payment", price: Math.round(amount * 100), quantity: 1 }
+            { name: billId ? `Bill ${billId}` : "Payment", price: Math.round(Math.max(amount - redeem, 0) * 100), quantity: 1 }
           ],
           currency: "usd",
           metadata: { billId: billId || '' }
@@ -70,7 +83,12 @@ const CheckoutForm: React.FC = () => {
         // Mark bill paid in backend if billId provided
         if (billId) {
           try {
-            await fetch(`${API_URL}/payment-bills/${billId}/pay`, { method: 'POST', credentials: 'include' })
+            await fetch(`${API_URL}/payment-bills/${billId}/pay`, { 
+              method: 'POST', 
+              credentials: 'include',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ redeem })
+            })
           } catch {}
         }
         setTimeout(() => navigate('/user/payments'), 1200)
@@ -104,9 +122,28 @@ const CheckoutForm: React.FC = () => {
               <span className="text-gray-600">Amount</span>
               <span className="font-semibold text-gray-900">LKR {Number.isFinite(amount) ? amount.toFixed(2) : '0.00'}</span>
             </div>
+            {reward && reward.points > 0 && (
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-600">Rewards available</span>
+                  <span className="font-medium text-gray-900">{reward.points} pts</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <input 
+                    type="number" 
+                    min={0}
+                    max={reward.points}
+                    value={redeem}
+                    onChange={e => setRedeem(Math.max(0, Math.min(Number(e.target.value || 0), reward.points, amount)))}
+                    className="w-28 px-2 py-1 border rounded"
+                  />
+                  <span className="text-xs text-gray-500">1 pt = LKR 1</span>
+                </div>
+              </div>
+            )}
             <div className="pt-3 mt-3 border-t border-gray-200 flex items-center justify-between">
               <span className="text-gray-700">Total</span>
-              <span className="text-emerald-600 font-bold text-lg">LKR {Number.isFinite(amount) ? amount.toFixed(2) : '0.00'}</span>
+              <span className="text-emerald-600 font-bold text-lg">LKR {Number.isFinite(amount) ? Math.max(amount - redeem, 0).toFixed(2) : '0.00'}</span>
             </div>
           </div>
           <div className="mt-6 text-xs text-gray-500">
